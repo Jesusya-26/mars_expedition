@@ -1,0 +1,43 @@
+{% extends "base.html" %}
+
+{% block content %}
+<center><h3>Works log</h3></center>
+{% for item in jobs%}
+<center><table cellpadding="8">
+    <tr>
+         <td><h4>Action # {{loop.index}}</h4></td>
+    </tr>
+    <tr>
+        <td style="background-color: #D3D3D3">Title of Activity</td>
+        <td style="background-color: #D3D3D3">Team leader</td>
+        <td style="background-color: #D3D3D3">Duration</td>
+        <td style="background-color: #D3D3D3">List of collaborators</td>
+        <td style="background-color: #D3D3D3">Is finished</td>
+    </tr>
+    <tr>
+        <td style="background-color: #dfe6f3">
+            <center>{{item.job.capitalize()}}</center>
+        </td>
+        <td style="background-color: #dfe6f3">
+            <center>{{item.user.surname}} {{item.user.name}}</center>
+        </td>
+        <td style="background-color: #dfe6f3">
+            <center>{{item.work_size}} hours</center>
+        </td>
+        <td style="background-color: #dfe6f3">
+            <center>{{item.collaborators}}</center>
+        </td>
+        {% if item.is_finished%}
+        <td style="background-color: #ffe6ff">
+            <center>Is finished</center>
+        </td>
+        {% else %}
+        <td style="background-color: #ffe6ff">
+            <center>Is not finished</center>
+        </td>
+        {% endif %}
+    </tr>
+</table></center>
+<p></p>
+{% endfor %}
+{% endblock %}
