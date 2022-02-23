@@ -3,6 +3,7 @@ from flask import Flask, render_template
 from data import db_session
 from data.users import User
 from data.jobs import Jobs
+from data.departments import Department
 from forms.user import RegisterForm
 
 app = Flask(__name__)
