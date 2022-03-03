@@ -1,51 +1,18 @@
 import datetime
-from flask import Flask, render_template
+from flask import Flask, render_template, redirect
+from flask_login import LoginManager, login_required, login_user, current_user
 from data import db_session
 from data.users import User
 from data.jobs import Jobs
 from data.departments import Department
-from forms.user import RegisterForm
+from forms.user import RegisterForm, LoginForm
+from forms.job import JobForm
+
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'yandexlyceum_secret_key'
-
-
-def create_team(db_sess):
-    team_lead = User()
-    team_lead.surname = 'Scott'
-    team_lead.name = 'Ridley'
-    team_lead.age = 21
-    team_lead.position = 'captain'
-    team_lead.speciality = 'research engineer'
-    team_lead.address = 'module_1'
-    team_lead.email = 'scott_chief@mars.org'
-    db_sess.add(team_lead)
-    db_sess.commit()
-    for i in range(1, 4):
-        colonist = User()
-        colonist.surname = f'Surname of Colonist {i}'
-        colonist.name = f'Name of Colonist {i}'
-        colonist.age = 20 + i
-        colonist.position = f'Colonist {i}'
-        colonist.speciality = f'Student {i}'
-        colonist.address = f'Mars street {i}'
-        colonist.email = f'colonist{i}@mars.org'
-        db_sess.add(colonist)
-        db_sess.commit()
-        work = Jobs()
-        work.team_leader = 1
-        work.job = 'deployment of residential modules 1 and 2'
-        work.work_size = 15
-        work.collaborators = '2, 3'
-        db_sess.add(work)
-        db_sess.commit()
-    work = Jobs()
-    work.team_leader = 1
-    work.job = 'deployment of residential modules 1 and 2'
-    work.work_size = 15
-    work.collaborators = '2'
-    db_sess.add(work)
-    db_sess.commit()
+login_manager = LoginManager()
+login_manager.init_app(app)
 
 
 def main():
@@ -53,11 +20,24 @@ def main():
     app.run(port=8080, host='127.0.0.1')
 
 
-@app.route("/")
-def index():
+@login_manager.user_loader
+def load_user(user_id):
     db_sess = db_session.create_session()
-    create_team(db_sess)
-    return render_template("index.html", jobs=db_sess.query(User).first().jobs)
+    return db_sess.query(User).get(user_id)
+
+
+@app.route('/logout')
+@login_required
+def logout():
+    logout_user()
+    return redirect("/")
+
+
+@app.route("/")
+def work_log():
+    db_sess = db_session.create_session()
+    jobs = db_sess.query(Jobs).all()
+    return render_template("work_log.html", title="Work log", jobs=jobs)
 
 
 @app.route('/register', methods=['GET', 'POST'])
@@ -65,14 +45,14 @@ def reqister():
     form = RegisterForm()
     if form.validate_on_submit():
         if form.password.data != form.password_again.data:
-            return render_template('register.html', title='Регистрация',
+            return render_template('register.html', title='Registration',
                                    form=form,
-                                   message="Пароли не совпадают")
+                                   message="Passwords don't match")
         db_sess = db_session.create_session()
         if db_sess.query(User).filter(User.email == form.email.data).first():
-            return render_template('register.html', title='Регистрация',
+            return render_template('register.html', title='Registration',
                                    form=form,
-                                   message="Такой пользователь уже есть")
+                                   message="There is already such a user")
         user = User(
             email=form.email.data,
             surname=form.surname.data,
@@ -86,7 +66,42 @@ def reqister():
         db_sess.add(user)
         db_sess.commit()
         return redirect('/login')
-    return render_template('register.html', title='Регистрация', form=form)
+    return render_template('register.html', title="Registration", form=form)
+
+
+@app.route('/login', methods=['GET', 'POST'])
+def login():
+    form = LoginForm()
+    if form.validate_on_submit():
+        db_sess = db_session.create_session()
+        user = db_sess.query(User).filter(User.email == form.email.data).first()
+        if user and user.check_password(form.password.data):
+            login_user(user, remember=form.remember_me.data)
+            return redirect("/")
+        return render_template('login.html',
+                               message="Incorrect login or password",
+                               form=form)
+    return render_template('login.html', title='Authorization', form=form)
+
+
+@app.route('/job',  methods=['GET', 'POST'])
+@login_required
+def add_job():
+    form = JobForm()
+    if form.validate_on_submit():
+        db_sess = db_session.create_session()
+        job = Jobs()
+        job.job = form.job.data
+        job.team_leader = form.team_leader.data
+        job.work_size = form.work_size.data
+        job.collaborators = form.collaborators.data
+        job.is_finished = form.is_finished.data
+        current_user.jobs.append(job)
+        db_sess.merge(current_user)
+        db_sess.commit()
+        return redirect('/')
+    return render_template('jobs.html', title='Adding a Job',
+                           form=form)
 
 
 if __name__ == '__main__':
