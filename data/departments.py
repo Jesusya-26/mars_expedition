@@ -3,7 +3,7 @@ from sqlalchemy import orm
 from .db_session import SqlAlchemyBase
 
 
-class Department(SqlAlchemyBase):
+class Departments(SqlAlchemyBase):
     __tablename__ = 'departments'
 
     id = sqlalchemy.Column(sqlalchemy.Integer,
@@ -17,4 +17,4 @@ class Department(SqlAlchemyBase):
     user = orm.relation('User')
 
     def __repr__(self):
-        return f'<Department> {self.title}'
+        return f'<Departments> {self.title}'
