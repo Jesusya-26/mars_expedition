@@ -12,10 +12,11 @@
          <td><h4>Action # {{loop.index}}</h4></td>
     </tr>
     <tr>
-        <td style="background-color: #D3D3D3">Title of Activity</td>
+        <td style="background-color: #D3D3D3">Title of activity</td>
         <td style="background-color: #D3D3D3">Team leader</td>
         <td style="background-color: #D3D3D3">Duration</td>
         <td style="background-color: #D3D3D3">List of collaborators</td>
+        <td style="background-color: #D3D3D3">Hazard category</td>
         <td style="background-color: #D3D3D3">Is finished</td>
     </tr>
     <tr>
@@ -28,8 +29,16 @@
         <td style="background-color: #dfe6f3">
             <center>{{item.work_size}} hours</center>
         </td>
+        {% if item.collaborators%}
         <td style="background-color: #dfe6f3">
             <center>{{item.collaborators}}</center>
+        </td>
+        {% else %}
+        <td style="background-color: #dfe6f3">
+            <center>-</center>
+        {% endif %}
+        <td style="background-color: #dfe6f3">
+            <center>{{item.category}}</center>
         </td>
         {% if item.is_finished%}
         <td style="background-color: #d4ffb2">

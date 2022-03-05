@@ -4,6 +4,7 @@ from data import db_session
 from data.users import User
 from data.jobs import Jobs
 from data.departments import Departments
+from data.category import Category
 from forms.user import RegisterForm, LoginForm
 from forms.job import JobForm
 from forms.department import DepartmentForm
@@ -98,12 +99,19 @@ def add_job():
     if form.validate_on_submit():
         db_sess = db_session.create_session()
         job = Jobs()
+        if not db_sess.query(Category).filter(Category.id == form.category.data).first():
+            category = Category()
+            category.name = f'Category №{form.category.data}'
+        else:
+            category = db_sess.query(Category).filter(Category.id == form.category.data).first()
         job.job = form.job.data
         job.team_leader = form.team_leader.data
         job.work_size = form.work_size.data
         job.collaborators = form.collaborators.data
+        job.category = form.category.data
         job.is_finished = form.is_finished.data
         current_user.jobs.append(job)
+        job.categories.append(category)
         db_sess.merge(current_user)
         db_sess.commit()
         return redirect("/")
@@ -126,6 +134,7 @@ def edit_job(id):
             form.team_leader.data = job.team_leader
             form.work_size.data = job.work_size
             form.collaborators.data = job.collaborators
+            form.category.data = job.category
             form.is_finished.data = job.is_finished
         else:
             abort(404)
@@ -136,11 +145,19 @@ def edit_job(id):
                                                  current_user == db_sess.query(User).first()))
                                          ).first()
         if job:
+            if not db_sess.query(Category).filter(Category.id == form.category.data).first():
+                category = Category()
+                category.name = f'Category №{form.category.data}'
+            else:
+                category = db_sess.query(Category).filter(Category.id == form.category.data).first()
             job.job = form.job.data
             job.team_leader = form.team_leader.data
             job.work_size = form.work_size.data
             job.collaborators = form.collaborators.data
+            job.category = form.category.data
             job.is_finished = form.is_finished.data
+            job.categories.clear()
+            job.categories.append(category)
             db_sess.commit()
             return redirect("/")
         else:

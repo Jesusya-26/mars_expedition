@@ -14,12 +14,16 @@ class Jobs(SqlAlchemyBase):
     job = sqlalchemy.Column(sqlalchemy.String, nullable=True)
     work_size = sqlalchemy.Column(sqlalchemy.Integer, nullable=True)
     collaborators = sqlalchemy.Column(sqlalchemy.String, nullable=True)
+    category = sqlalchemy.Column(sqlalchemy.Integer)
     start_date = sqlalchemy.Column(sqlalchemy.DateTime,
                                    default=datetime.datetime.now)
     end_date = sqlalchemy.Column(sqlalchemy.DateTime,
                                  default=datetime.datetime.now)
     is_finished = sqlalchemy.Column(sqlalchemy.Boolean, default=False)
     user = orm.relation('User')
+    categories = orm.relation("Category",
+                              secondary="association",
+                              backref="jobs")
 
     def __repr__(self):
         return f'<Job> {self.job}'
