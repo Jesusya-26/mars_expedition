@@ -1,6 +1,6 @@
-from flask import Flask, render_template, redirect, request, abort
+from flask import Flask, render_template, redirect, request, abort, make_response, jsonify
 from flask_login import LoginManager, login_required, login_user, current_user, logout_user
-from data import db_session
+from data import db_session, jobs_api, users_api
 from data.users import User
 from data.jobs import Jobs
 from data.departments import Departments
@@ -18,6 +18,8 @@ login_manager.init_app(app)
 
 def main():
     db_session.global_init('db/mars_explorer.db')
+    app.register_blueprint(jobs_api.blueprint)
+    app.register_blueprint(users_api.blueprint)
     app.run(port=8080, host='127.0.0.1')
 
 
@@ -68,7 +70,8 @@ def reqister():
             age=form.age.data,
             position=form.position.data,
             speciality=form.speciality.data,
-            address=form.address.data
+            address=form.address.data,
+            city_from=form.city_from.data
         )
         user.set_password(form.password.data)
         db_sess.add(user)
@@ -145,11 +148,11 @@ def edit_job(id):
                                                  current_user == db_sess.query(User).first()))
                                          ).first()
         if job:
-            if not db_sess.query(Category).filter(Category.id == form.category.data).first():
+            if not db_sess.query(Category).get(form.category.data):
                 category = Category()
                 category.name = f'Category №{form.category.data}'
             else:
-                category = db_sess.query(Category).filter(Category.id == form.category.data).first()
+                category = db_sess.query(Category).get(form.category.data)
             job.job = form.job.data
             job.team_leader = form.team_leader.data
             job.work_size = form.work_size.data
@@ -255,6 +258,18 @@ def department_delete(id):
     else:
         abort(404)
     return redirect('/departments')
+
+
+@app.route('/users_show/<int:user_id>', methods=['GET'])
+def show_hometown(user_id):
+    db_sess = db_session.create_session()
+    user = db_sess.query(User).get(user_id)
+    return render_template('nostalgy.html', title='Hometown', user=user)
+
+
+@app.errorhandler(404)
+def not_found(error):
+    return make_response(jsonify({'error': 'Not found'}), 404)
 
 
 if __name__ == '__main__':
