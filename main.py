@@ -1,3 +1,4 @@
+import os.path
 import requests
 from flask import Flask, render_template, redirect, request, abort, make_response, jsonify, url_for
 from flask_login import LoginManager, login_required, login_user, current_user, logout_user
@@ -289,14 +290,17 @@ def show_hometown(user_id):
         "spn": ",".join([delta, delta]),
         "l": "sat"
     }
-
     map_api_server = "http://static-maps.yandex.ru/1.x/"
     response = requests.get(map_api_server, params=map_params)
-    map_file = "static/img/map.png"
-    with open(map_file, "wb") as file:
-        file.write(response.content)
-    img = url_for('static', filename='img/map.png')
-    return render_template('nostalgy.html', title='Hometown', user=user, image=img)
+    map_file = f"static/img/map_{user.city_from}.png"
+    if os.path.isfile(map_file):
+        img = url_for('static', filename=f'img/map_{user.city_from}.png')
+        return render_template('nostalgy.html', title='Hometown', user=user, image=img)
+    else:
+        with open(map_file, "wb") as file:
+            file.write(response.content)
+        img = url_for('static', filename=f'img/map_{user.city_from}.png')
+        return render_template('nostalgy.html', title='Hometown', user=user, image=img)
 
 
 @app.errorhandler(404)
