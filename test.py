@@ -1,3 +1,4 @@
-from requests import get
+from requests import get, post, delete
 
-get('http://localhost:8080/api/users_show/3')
+
+get('http://127.0.0.1:8080/api/users_show/2')

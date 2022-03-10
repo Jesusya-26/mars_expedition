@@ -1,6 +1,8 @@
-from flask import Flask, render_template, redirect, request, abort, make_response, jsonify
+import requests
+from flask import Flask, render_template, redirect, request, abort, make_response, jsonify, url_for
 from flask_login import LoginManager, login_required, login_user, current_user, logout_user
-from data import db_session, jobs_api, users_api
+from flask_restful import Api
+from data import db_session, jobs_api, users_api, users_resource
 from data.users import User
 from data.jobs import Jobs
 from data.departments import Departments
@@ -11,9 +13,12 @@ from forms.department import DepartmentForm
 
 
 app = Flask(__name__)
+api = Api(app)
 app.config['SECRET_KEY'] = 'yandexlyceum_secret_key'
 login_manager = LoginManager()
 login_manager.init_app(app)
+api.add_resource(users_resource.UsersListResource, '/api/v2/users')
+api.add_resource(users_resource.UsersResource, '/api/v2/users/<int:user_id>')
 
 
 def main():
@@ -264,7 +269,34 @@ def department_delete(id):
 def show_hometown(user_id):
     db_sess = db_session.create_session()
     user = db_sess.query(User).get(user_id)
-    return render_template('nostalgy.html', title='Hometown', user=user)
+    geocoder_api_server = "http://geocode-maps.yandex.ru/1.x/"
+    geocoder_params = {
+        "apikey": "40d1649f-0493-4b70-98ba-98533de7710b",
+        "geocode": user.city_from,
+        "format": "json"}
+    response = requests.get(geocoder_api_server, params=geocoder_params)
+    if not response:
+        return render_template('nostalgy.html', title='Hometown', user=user, image=None)
+
+    json_response = response.json()
+    toponym = json_response["response"]["GeoObjectCollection"][
+        "featureMember"][0]["GeoObject"]
+    toponym_coodrinates = toponym["Point"]["pos"]
+    toponym_longitude, toponym_lattitude = toponym_coodrinates.split(" ")
+    delta = "0.050"
+    map_params = {
+        "ll": ",".join([toponym_longitude, toponym_lattitude]),
+        "spn": ",".join([delta, delta]),
+        "l": "sat"
+    }
+
+    map_api_server = "http://static-maps.yandex.ru/1.x/"
+    response = requests.get(map_api_server, params=map_params)
+    map_file = "static/img/map.png"
+    with open(map_file, "wb") as file:
+        file.write(response.content)
+    img = url_for('static', filename='img/map.png')
+    return render_template('nostalgy.html', title='Hometown', user=user, image=img)
 
 
 @app.errorhandler(404)

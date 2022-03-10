@@ -90,7 +90,7 @@ def edit_user(user_id):
 
 
 @blueprint.route('/api/users/<int:user_id>', methods=['DELETE'])
-def delete_job(user_id):
+def delete_user(user_id):
     db_sess = db_session.create_session()
     user = db_sess.query(User).get(user_id)
     if not user:
@@ -112,7 +112,9 @@ def show_hometown(user_id):
         "format": "json"}
     response = requests.get(geocoder_api_server, params=geocoder_params)
     if not response:
-        pass
+        url = f'http://127.0.0.1:8080/users_show/{user_id}'
+        webbrowser.open(url)
+        return 'error'
 
     json_response = response.json()
     toponym = json_response["response"]["GeoObjectCollection"][
@@ -128,7 +130,7 @@ def show_hometown(user_id):
 
     map_api_server = "http://static-maps.yandex.ru/1.x/"
     response = requests.get(map_api_server, params=map_params)
-    map_file = "resources/map.png"
+    map_file = "static/img/map.png"
     with open(map_file, "wb") as file:
         file.write(response.content)
 
