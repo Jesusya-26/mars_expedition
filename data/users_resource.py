@@ -2,17 +2,7 @@ from flask import jsonify, request
 from flask_restful import reqparse, abort, Resource
 from . import db_session
 from .users import User
-
-parser = reqparse.RequestParser()
-parser.add_argument('surname', required=True)
-parser.add_argument('name', required=True)
-parser.add_argument('age', required=True, type=int)
-parser.add_argument('position', required=True,)
-parser.add_argument('speciality', required=True)
-parser.add_argument('address', required=True)
-parser.add_argument('city_from', required=True)
-parser.add_argument('email', required=True)
-parser.add_argument('password', required=True)
+from .parsers import user_parser
 
 
 class UsersResource(Resource):
@@ -26,12 +16,14 @@ class UsersResource(Resource):
                 'user':
                     user.to_dict(
                         only=(
-                        'surname', 'name', 'age', 'position', 'speciality', 'address', 'city_from', 'email'))
+                            'surname', 'name', 'age', 'position', 'speciality', 'address', 'city_from',
+                            'email'))
             }
         )
 
     def post(self, user_id):
         abort_if_user_not_found(user_id)
+        args = user_parser.parse_args()
         session = db_session.create_session()
         user = session.query(User).get(user_id)
         user.surname = request.json['surname']
@@ -65,13 +57,14 @@ class UsersListResource(Resource):
                 'users':
                     [item.to_dict(
                         only=(
-                        'surname', 'name', 'age', 'position', 'speciality', 'address', 'city_from', 'email'))
+                            'surname', 'name', 'age', 'position', 'speciality', 'address', 'city_from',
+                            'email'))
                         for item in users]
             }
         )
 
     def post(self):
-        args = parser.parse_args()
+        args = user_parser.parse_args()
         session = db_session.create_session()
         user = User(
             surname=request.json['surname'],

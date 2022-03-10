@@ -1,5 +1,4 @@
 import flask
-
 from flask import jsonify, request
 from . import db_session
 from .jobs import Jobs
@@ -59,7 +58,7 @@ def create_job():
     )
     if not db_sess.query(Category).get(request.json['category']):
         category = Category()
-        category.name = f'Category №{form.category.data}'
+        category.name = f'Category №{request.json["category"]}'
     else:
         category = db_sess.query(Category).get(request.json['category'])
     job.categories.append(category)
@@ -102,6 +101,7 @@ def delete_job(job_id):
     job = db_sess.query(Jobs).get(job_id)
     if not job:
         return jsonify({'error': 'Not found'})
+    job.categories.clear()
     db_sess.delete(job)
     db_sess.commit()
     return jsonify({'success': 'OK'})

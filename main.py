@@ -3,7 +3,7 @@ import requests
 from flask import Flask, render_template, redirect, request, abort, make_response, jsonify, url_for
 from flask_login import LoginManager, login_required, login_user, current_user, logout_user
 from flask_restful import Api
-from data import db_session, jobs_api, users_api, users_resource
+from data import db_session, jobs_api, users_api, users_resource, jobs_resource
 from data.users import User
 from data.jobs import Jobs
 from data.departments import Departments
@@ -20,6 +20,8 @@ login_manager = LoginManager()
 login_manager.init_app(app)
 api.add_resource(users_resource.UsersListResource, '/api/v2/users')
 api.add_resource(users_resource.UsersResource, '/api/v2/users/<int:user_id>')
+api.add_resource(jobs_resource.JobsListResource, '/api/v2/jobs')
+api.add_resource(jobs_resource.JobsResource, '/api/v2/jobs/<int:job_id>')
 
 
 def main():
